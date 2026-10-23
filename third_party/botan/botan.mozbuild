@@ -202,27 +202,45 @@ SOURCES += [
     "src/lib/xof/xof.cpp"
 ]
 
-# Sources pulled in by the extra Botan modules that rnp_experimental needs for
-# PQC. Must stay in sync with the module list in third_party/openpgp.configure.
-if CONFIG["NIGHTLY_BUILD"]:
-    SOURCES += [
-        "src/lib/hash/shake/shake.cpp",
-        "src/lib/pubkey/curve448/curve448_gf.cpp",
-        "src/lib/pubkey/curve448/curve448_scalar.cpp",
-        "src/lib/pubkey/curve448/ed448/ed448.cpp",
-        "src/lib/pubkey/curve448/ed448/ed448_internal.cpp",
-        "src/lib/pubkey/curve448/x448/x448.cpp",
-        "src/lib/pubkey/curve448/x448/x448_internal.cpp",
-        "src/lib/pubkey/ec_group/legacy_ec_point/ec_inner_bn.cpp",
-        "src/lib/pubkey/ec_group/legacy_ec_point/ec_point.cpp",
-        "src/lib/pubkey/ec_group/legacy_ec_point/point_mul.cpp",
-        "src/lib/pubkey/kyber/kyber_common/kyber.cpp",
-        "src/lib/pubkey/kyber/kyber_common/kyber_algos.cpp",
-        "src/lib/pubkey/kyber/kyber_common/kyber_constants.cpp",
-        "src/lib/pubkey/kyber/kyber_common/kyber_keys.cpp",
-        "src/lib/pubkey/kyber/ml_kem/ml_kem_impl.cpp",
-        "src/lib/xof/shake_xof/shake_xof.cpp",
-    ]
+# Sources pulled in by the extra Botan modules that rnp_experimental needs
+# for PQC and RFC 9580 (X448/Ed448, ML-KEM, ML-DSA, SLH-DSA). This fork builds
+# that library on every channel, so these sources are not nightly-only.
+# Must stay in sync with the module list in third_party/openpgp.configure.
+# The ML-DSA and SLH-DSA files were taken from `configure.py --enable-modules`
+# with ml_dsa and slh_dsa_shake added to the nightly module set.
+SOURCES += [
+    "src/lib/hash/shake/shake.cpp",
+    "src/lib/pubkey/curve448/curve448_gf.cpp",
+    "src/lib/pubkey/curve448/curve448_scalar.cpp",
+    "src/lib/pubkey/curve448/ed448/ed448.cpp",
+    "src/lib/pubkey/curve448/ed448/ed448_internal.cpp",
+    "src/lib/pubkey/curve448/x448/x448.cpp",
+    "src/lib/pubkey/curve448/x448/x448_internal.cpp",
+    "src/lib/pubkey/dilithium/dilithium_common/dilithium.cpp",
+    "src/lib/pubkey/dilithium/dilithium_common/dilithium_algos.cpp",
+    "src/lib/pubkey/dilithium/dilithium_common/dilithium_constants.cpp",
+    "src/lib/pubkey/dilithium/dilithium_common/dilithium_keys.cpp",
+    "src/lib/pubkey/dilithium/dilithium_common/dilithium_shake/dilithium_shake_xof.cpp",
+    "src/lib/pubkey/dilithium/dilithium_common/dilithium_symmetric_primitives.cpp",
+    "src/lib/pubkey/dilithium/ml_dsa/ml_dsa_impl.cpp",
+    "src/lib/pubkey/ec_group/legacy_ec_point/ec_inner_bn.cpp",
+    "src/lib/pubkey/ec_group/legacy_ec_point/ec_point.cpp",
+    "src/lib/pubkey/ec_group/legacy_ec_point/point_mul.cpp",
+    "src/lib/pubkey/kyber/kyber_common/kyber.cpp",
+    "src/lib/pubkey/kyber/kyber_common/kyber_algos.cpp",
+    "src/lib/pubkey/kyber/kyber_common/kyber_constants.cpp",
+    "src/lib/pubkey/kyber/kyber_common/kyber_keys.cpp",
+    "src/lib/pubkey/kyber/ml_kem/ml_kem_impl.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sp_fors.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sp_hash.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sp_hypertree.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sp_parameters.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sp_treehash.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sp_wots.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sp_xmss.cpp",
+    "src/lib/pubkey/sphincsplus/sphincsplus_common/sphincsplus.cpp",
+    "src/lib/xof/shake_xof/shake_xof.cpp",
+]
 
 if CONFIG["CC_TYPE"] == "clang-cl":
     SOURCES += [

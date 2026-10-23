@@ -68,7 +68,10 @@ rnp_defines = {
     "ENABLE_CAST5": True,
     "ENABLE_RIPEMD160": True,
     "ENABLE_PQC": True,
-    "ENABLE_CRYPTO_REFRESH": False,
+    # RFC 9580 (crypto refresh): PKESK v6 and SEIPDv2 / AES-OCB. Required to
+    # decrypt Delta Chat mail. Must stay in agreement with
+    # RNP_EXPERIMENTAL_CRYPTO_REFRESH in experimental-features.mozbuild.
+    "ENABLE_CRYPTO_REFRESH": True,
     "PACKAGE_BUGREPORT": '"https://bugzilla.mozilla.org/enter_bug.cgi?product=Thunderbird"',
 }
 crypto_backend = CONFIG["MZLA_LIBRNP_BACKEND"]
@@ -179,6 +182,8 @@ SOURCES += [
     "src/librepgp/stream-parse.cpp",
     "src/librepgp/stream-sig.cpp",
     "src/librepgp/stream-write.cpp",
+    # SEIPDv2 (AES-OCB). The file is empty unless ENABLE_CRYPTO_REFRESH is set.
+    "src/librepgp/v2_seipd.cpp",
     # libsexpp
     "src/libsexpp/src/ext-key-format.cpp",
     "src/libsexpp/src/sexp-char-defs.cpp",
@@ -226,6 +231,13 @@ if CONFIG["MZLA_LIBRNP_BACKEND"] == "botan":
         "src/lib/crypto/symmetric.cpp",
         "src/lib/crypto/symmetric_common.cpp",
         "src/lib/crypto/x25519_x448.cpp",
+        # Compiled when both ENABLE_PQC and ENABLE_CRYPTO_REFRESH are set.
+        # ML-DSA and SLH-DSA need the matching Botan modules (ml_dsa,
+        # slh_dsa_shake); see third_party/openpgp.configure.
+        "src/lib/crypto/dilithium.cpp",
+        "src/lib/crypto/dilithium_common.cpp",
+        "src/lib/crypto/dilithium_exdsa_composite.cpp",
+        "src/lib/crypto/sphincsplus.cpp",
     ]
 if CONFIG["MZLA_LIBRNP_BACKEND"] == "openssl":
     SOURCES += [
@@ -253,6 +265,22 @@ if CONFIG["MZLA_LIBRNP_BACKEND"] == "openssl":
         "src/lib/crypto/signatures.cpp",
         "src/lib/crypto/symmetric_common.cpp",
         "src/lib/crypto/symmetric_ossl.cpp",
+        # Same split as upstream CMakeLists.txt for ENABLE_PQC and
+        # ENABLE_CRYPTO_REFRESH. v2_seipd.cpp is listed with the shared sources.
+        "src/lib/crypto/secure_bytes.cpp",
+        "src/lib/crypto/hkdf.cpp",
+        "src/lib/crypto/hkdf_ossl.cpp",
+        "src/lib/crypto/ed25519_ed448_ossl.cpp",
+        "src/lib/crypto/x25519_x448_ossl.cpp",
+        "src/lib/crypto/exdsa_ecdhkem_ossl.cpp",
+        "src/lib/crypto/kyber_common.cpp",
+        "src/lib/crypto/kyber_ossl.cpp",
+        "src/lib/crypto/kyber_ecdh_composite.cpp",
+        "src/lib/crypto/kem_combiner.cpp",
+        "src/lib/crypto/dilithium_common.cpp",
+        "src/lib/crypto/dilithium_ossl.cpp",
+        "src/lib/crypto/dilithium_exdsa_composite.cpp",
+        "src/lib/crypto/sphincsplus_ossl.cpp",
     ]
 
 if CONFIG["MOZ_STDCXX_COMPAT"] and (CONFIG["MOZ_ASAN"] or CONFIG["MOZ_TSAN"]):

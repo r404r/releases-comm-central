@@ -24,8 +24,9 @@ if CONFIG["MZLA_LIBRNP"]:
         "rnp",
         "zlib",
     ]
-    if CONFIG["NIGHTLY_BUILD"]:
-        DIRS += ["rnp_experimental"]
+    # This fork ships the experimental library on every channel so RFC 9580
+    # mail can be decrypted outside Nightly. See README.md.
+    DIRS += ["rnp_experimental"]
     if CONFIG["MZLA_LIBRNP_BACKEND"] == "botan":
         DIRS += ["botan"]
 

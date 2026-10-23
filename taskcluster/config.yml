@@ -372,11 +372,11 @@ mac-signing:
                 - deep: false
                   runtime: true
                   force: true
-                  # rnp_experimental is only packaged in the daily channel
+                  # rnp_experimental CLI tools are packaged on every channel in this fork.
+                  # librnp_experimental.dylib is covered by the *.dylib glob above.
                   globs:
                       - "/Contents/MacOS/rnp-cli-experimental"
                       - "/Contents/MacOS/rnpkeys-experimental"
-                  only-if-milestone-is-nightly: true
 
                 - deep: false
                   runtime: true
@@ -430,11 +430,11 @@ mac-signing:
                   runtime: true
                   force: true
                   entitlements: public/build/security/utility.xml
-                  # rnp_experimental is only packaged in the daily channel
+                  # rnp_experimental CLI tools are packaged on every channel in this fork.
+                  # librnp_experimental.dylib is covered by the *.dylib glob above.
                   globs:
                       - "/Contents/MacOS/rnp-cli-experimental"
                       - "/Contents/MacOS/rnpkeys-experimental"
-                  only-if-milestone-is-nightly: true
 
                 - deep: false
                   runtime: true

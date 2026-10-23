@@ -127,6 +127,8 @@ rnp_op_encrypt_add_recipient
 rnp_op_encrypt_add_signature
 rnp_op_encrypt_create
 rnp_op_encrypt_destroy
+rnp_op_encrypt_enable_pkesk_v6
+rnp_op_encrypt_enable_skesk_v6
 rnp_op_encrypt_execute
 rnp_op_encrypt_prefer_pqc_enc_subkey
 rnp_op_encrypt_set_aead
@@ -165,6 +167,7 @@ rnp_op_generate_set_protection_mode
 rnp_op_generate_set_protection_password
 rnp_op_generate_set_request_password
 rnp_op_generate_set_userid
+rnp_op_generate_set_v6_key
 rnp_op_generate_subkey_create
 rnp_op_sign_add_signature
 rnp_op_sign_cleartext_create
