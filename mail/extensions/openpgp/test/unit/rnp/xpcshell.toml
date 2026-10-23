@@ -23,10 +23,11 @@ skip-if = ["os != 'linux'"]
 
 ["test_mimeTree.js"]
 
-# ML-KEM requires the experimental RNP library, which is only
-# distributed in nightly builds.
+# ML-KEM and RFC 9580 decryption use the experimental RNP library.
+# This fork builds that library on every channel.
+["test_cryptoRefresh.js"]
+
 ["test_pqcSubkey.js"]
-run-if = ["nightly_build"]
 
 ["test_revocation.js"]
 
