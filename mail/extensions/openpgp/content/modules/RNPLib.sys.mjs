@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { ctypes } from "resource://gre/modules/ctypes.sys.mjs";
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -25,9 +24,15 @@ var librnp, librnpPath;
 // instead of the regular one. Resolved once, because the decision must
 // stay consistent with the set of functions that enableRNPLibJS()
 // declares, which happens only at startup.
-const usingExperimental =
-  AppConstants.NIGHTLY_BUILD &&
-  Services.prefs.getBoolPref("mail.openpgp.use_rnp_experimental", false);
+//
+// Upstream also requires AppConstants.NIGHTLY_BUILD. This fork builds and
+// packages rnp_experimental on every channel (crypto refresh / RFC 9580),
+// and the pref defaults to true. Set mail.openpgp.use_rnp_experimental to
+// false and restart to load the stable library instead.
+const usingExperimental = Services.prefs.getBoolPref(
+  "mail.openpgp.use_rnp_experimental",
+  true
+);
 
 function tryLoadRNP(name, suffix) {
   const filename = ctypes.libraryName(name) + suffix;

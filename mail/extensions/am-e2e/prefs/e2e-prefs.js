@@ -111,11 +111,13 @@ pref("mail.smime.accept_insecure_sha1_message_signatures", false);
 // When sending, encrypt to this additional key. Not available in release channel builds.
 pref("mail.openpgp.debug.extra_encryption_key", "");
 
-#ifdef NIGHTLY_BUILD
 // Load the alternative RNP library "rnp_experimental".
-// Requires a restart to take effect. Ignored in beta and release/esr builds.
-pref("mail.openpgp.use_rnp_experimental", false);
-#endif
+// Requires a restart to take effect.
+// This fork defaults the pref to true on every channel so RFC 9580 PKESK v6
+// and SEIPDv2 messages (Delta Chat) decrypt. Set it to false to use the
+// stable RNP 0.18.1 library instead. Upstream defines this pref only in
+// Nightly, and defaults it to false.
+pref("mail.openpgp.use_rnp_experimental", true);
 
 // Hide prefs and menu entries from non-advanced users
 pref("temp.openpgp.advancedUser", false);
