@@ -63,6 +63,10 @@ vendoring:
     - README.adoc
     - version.txt
 
+  # Already applied to the in-tree sources. mach vendor replays this list.
+  patches:
+    - ../patches/rnp_experimental/dc-v6-pkesk.patch
+
   update-actions:
     - action: replace-in-file-regex
       file: '{yaml_dir}/../README.rnp_experimental'

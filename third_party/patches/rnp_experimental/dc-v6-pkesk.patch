@@ -1,0 +1,66 @@
+From: Thunderbird fork <thunderbird-fork@local>
+Date: Fri, 23 Oct 2026 00:00:00 +0000
+Subject: [PATCH] Accept anonymous v6 PKESK packets encrypted to v4 keys
+
+RFC 9580 PKESK v6 uses a one-octet count in front of the key version and
+fingerprint. A zero count means an anonymous recipient: those two fields
+are omitted. Snapshot 4f5c4e6 rejects that count, then reads the
+following algorithm octet as a key version.
+
+v6 session keys do not start with a symmetric-algorithm id. ECDH (v4
+Cv25519) still takes the v3 path in do_encrypt_pkesk_v3_alg_id(), so the
+first byte of the session key was removed.
+
+An anonymous v6 PKESK has an empty fingerprint. Key lookup has to use an
+empty key id, which is the hidden-recipient search the FFI already
+understands.
+
+Local patch against the vendored snapshot. Upstream RNP is fixing the
+same bugs separately; delete this file once a fixed snapshot is vendored.
+
+---
+diff --git a/src/librepgp/stream-packet.cpp b/src/librepgp/stream-packet.cpp
+index 3da337dd28..d7cfc9d82b 100644
+--- a/src/librepgp/stream-packet.cpp
++++ b/src/librepgp/stream-packet.cpp
+@@ -1283,15 +1283,15 @@ pgp_pk_sesskey_t::parse(pgp_source_t &src)
+             RNP_LOG("Error when reading length of next two fields");
+             return RNP_ERROR_BAD_FORMAT;
+         }
+-        if ((fp_and_key_ver_len != 1 + PGP_FINGERPRINT_V4_SIZE) &&
++        if (fp_and_key_ver_len && (fp_and_key_ver_len != 1 + PGP_FINGERPRINT_V4_SIZE) &&
+             (fp_and_key_ver_len != 1 + PGP_FINGERPRINT_V6_SIZE)) {
+             RNP_LOG("Invalid size for key version + length field");
+             return RNP_ERROR_BAD_FORMAT;
+         }
+ 
+         size_t  fp_len;
+-        uint8_t fp_key_version;
+-        if (!pkt.get(fp_key_version)) {
++        uint8_t fp_key_version = 0;
++        if (fp_and_key_ver_len && !pkt.get(fp_key_version)) {
+             RNP_LOG("Error when reading key version");
+             return RNP_ERROR_BAD_FORMAT;
+         }
+diff --git a/src/librepgp/stream-parse.cpp b/src/librepgp/stream-parse.cpp
+index b7c82a79ad..b4293d5a26 100644
+--- a/src/librepgp/stream-parse.cpp
++++ b/src/librepgp/stream-parse.cpp
+@@ -1737,7 +1737,7 @@ encrypted_try_key(pgp_source_encrypted_param_t *param,
+     }
+ 
+     /* This is always true for non-experimental pqc/crypto refresh */
+-    if (do_encrypt_pkesk_v3_alg_id(sesskey.alg)) {
++    if (do_encrypt_pkesk_v3_alg_id(sesskey.alg) && sesskey.version == PGP_PKSK_V3) {
+         sesskey.salg = static_cast<pgp_symm_alg_t>(decbuf[0]);
+         decbuf.erase(decbuf.begin());
+     }
+@@ -2439,6 +2439,8 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
+ #endif
+                 search = rnp::KeySearch::create(pubenc.key_id);
+ #if defined(ENABLE_CRYPTO_REFRESH)
++            } else if (!pubenc.fp.size()) { // anonymous PKESK v6
++                search = rnp::KeySearch::create(pgp::KeyID({}));
+             } else { // PGP_PKSK_V6
+                 search = rnp::KeySearch::create(pubenc.fp);
+             }

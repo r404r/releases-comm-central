@@ -4,8 +4,13 @@ https://github.com/rnpgp/rnp
 
 [commit 4f5c4e6e9b9a895762290bf03ed342ea8e69bbd2]
 
-rnp_experimental is used to test an unreleased RNP upstream snapshot
-in Thunderbird Daily builds.
+rnp_experimental is an unreleased RNP upstream snapshot. This fork builds
+it on every channel, with ENABLE_CRYPTO_REFRESH, so it can decrypt
+RFC 9580 PKESK v6 and SEIPDv2 messages.
+
+A local patch for anonymous v6 PKESK packets is recorded in
+../patches/rnp_experimental/ and listed in moz.yaml. It is already
+applied to the sources in this directory.
 
 For licensing information, please refer to the included documentation.
 

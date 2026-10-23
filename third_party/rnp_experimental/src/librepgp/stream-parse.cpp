@@ -1737,7 +1737,7 @@ encrypted_try_key(pgp_source_encrypted_param_t *param,
     }
 
     /* This is always true for non-experimental pqc/crypto refresh */
-    if (do_encrypt_pkesk_v3_alg_id(sesskey.alg)) {
+    if (do_encrypt_pkesk_v3_alg_id(sesskey.alg) && sesskey.version == PGP_PKSK_V3) {
         sesskey.salg = static_cast<pgp_symm_alg_t>(decbuf[0]);
         decbuf.erase(decbuf.begin());
     }
@@ -2439,6 +2439,8 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
 #endif
                 search = rnp::KeySearch::create(pubenc.key_id);
 #if defined(ENABLE_CRYPTO_REFRESH)
+            } else if (!pubenc.fp.size()) { // anonymous PKESK v6
+                search = rnp::KeySearch::create(pgp::KeyID({}));
             } else { // PGP_PKSK_V6
                 search = rnp::KeySearch::create(pubenc.fp);
             }

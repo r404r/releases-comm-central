@@ -1283,15 +1283,15 @@ pgp_pk_sesskey_t::parse(pgp_source_t &src)
             RNP_LOG("Error when reading length of next two fields");
             return RNP_ERROR_BAD_FORMAT;
         }
-        if ((fp_and_key_ver_len != 1 + PGP_FINGERPRINT_V4_SIZE) &&
+        if (fp_and_key_ver_len && (fp_and_key_ver_len != 1 + PGP_FINGERPRINT_V4_SIZE) &&
             (fp_and_key_ver_len != 1 + PGP_FINGERPRINT_V6_SIZE)) {
             RNP_LOG("Invalid size for key version + length field");
             return RNP_ERROR_BAD_FORMAT;
         }
 
         size_t  fp_len;
-        uint8_t fp_key_version;
-        if (!pkt.get(fp_key_version)) {
+        uint8_t fp_key_version = 0;
+        if (fp_and_key_ver_len && !pkt.get(fp_key_version)) {
             RNP_LOG("Error when reading key version");
             return RNP_ERROR_BAD_FORMAT;
         }
