@@ -34,6 +34,9 @@ What changed:
 - A local RNP patch for anonymous v6 PKESK packets is applied to that tree
   and recorded in `third_party/patches/rnp_experimental/dc-v6-pkesk.patch`
   (`third_party/rnp_experimental/moz.yaml` lists it for `mach vendor`).
+  A message with several anonymous recipients still decrypts when our key
+  is not the first: each PKESK walks the secret keys from the start, with
+  its own cap of 64 tries.
 - `RNP.decrypt()` passes `RNP_VERIFY_ALLOW_HIDDEN_RECIPIENT`. Anonymous v6
   packets have an empty fingerprint; the patch turns that into the empty
   key id this flag already understands.

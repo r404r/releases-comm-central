@@ -2429,6 +2429,8 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
         }
 
         size_t pubidx = 0;
+        /* Each hidden PKESK gets its own budget. Sharing this counter lets the
+         * first anonymous recipient consume all MAX_HIDDEN_TRIES attempts. */
         size_t hidden_tries = 0;
         errcode = RNP_ERROR_NO_SUITABLE_KEY;
         while (pubidx < param->pubencs.size()) {
@@ -2450,6 +2452,7 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
             auto seckey = handler->key_provider->request_key(*search, PGP_OP_DECRYPT, true);
             if (!seckey) {
                 pubidx++;
+                hidden_tries = 0;
                 continue;
             }
             /* Check whether key fits our needs */
@@ -2465,6 +2468,7 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
 #endif
             if (!hidden || (++hidden_tries >= MAX_HIDDEN_TRIES)) {
                 pubidx++;
+                hidden_tries = 0;
             }
             if (!seckey->has_secret() || !seckey->can_encrypt()) {
                 continue;
