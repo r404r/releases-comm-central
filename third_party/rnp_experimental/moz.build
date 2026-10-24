@@ -198,10 +198,17 @@ SOURCES += [
 SOURCES["src/lib/crypto/sha1cd/sha1.c"].flags += ["-Wno-unsafe-buffer-usage", "-Wno-extra-semi-stmt"]
 SOURCES["src/lib/crypto/sha1cd/ubc_check.c"].flags += ["-Wno-unsafe-buffer-usage"]
 
+# ML-DSA and SLH-DSA (dilithium*.cpp, sphincsplus.cpp) are compiled when both
+# ENABLE_PQC and ENABLE_CRYPTO_REFRESH are set. They need the Botan modules
+# ml_dsa and slh_dsa_shake; see third_party/openpgp.configure.
+# mozbuild rejects a SOURCES literal that is not in sorted order.
 if CONFIG["MZLA_LIBRNP_BACKEND"] == "botan":
     SOURCES += [
         "src/lib/crypto/cipher.cpp",
         "src/lib/crypto/cipher_botan.cpp",
+        "src/lib/crypto/dilithium.cpp",
+        "src/lib/crypto/dilithium_common.cpp",
+        "src/lib/crypto/dilithium_exdsa_composite.cpp",
         "src/lib/crypto/dsa.cpp",
         "src/lib/crypto/dsa_common.cpp",
         "src/lib/crypto/ec.cpp",
@@ -228,59 +235,54 @@ if CONFIG["MZLA_LIBRNP_BACKEND"] == "botan":
         "src/lib/crypto/s2k.cpp",
         "src/lib/crypto/secure_bytes.cpp",
         "src/lib/crypto/signatures.cpp",
+        "src/lib/crypto/sphincsplus.cpp",
         "src/lib/crypto/symmetric.cpp",
         "src/lib/crypto/symmetric_common.cpp",
         "src/lib/crypto/x25519_x448.cpp",
-        # Compiled when both ENABLE_PQC and ENABLE_CRYPTO_REFRESH are set.
-        # ML-DSA and SLH-DSA need the matching Botan modules (ml_dsa,
-        # slh_dsa_shake); see third_party/openpgp.configure.
-        "src/lib/crypto/dilithium.cpp",
-        "src/lib/crypto/dilithium_common.cpp",
-        "src/lib/crypto/dilithium_exdsa_composite.cpp",
-        "src/lib/crypto/sphincsplus.cpp",
     ]
+# Same files as upstream CMakeLists.txt for ENABLE_PQC and ENABLE_CRYPTO_REFRESH.
+# v2_seipd.cpp is listed with the shared sources. Keep this literal sorted; an
+# OpenSSL configure evaluates it.
 if CONFIG["MZLA_LIBRNP_BACKEND"] == "openssl":
     SOURCES += [
-        "src/lib/crypto/dsa_common.cpp",
         "src/lib/crypto/cipher.cpp",
         "src/lib/crypto/cipher_ossl.cpp",
+        "src/lib/crypto/dilithium_common.cpp",
+        "src/lib/crypto/dilithium_exdsa_composite.cpp",
+        "src/lib/crypto/dilithium_ossl.cpp",
         "src/lib/crypto/dl_ossl.cpp",
+        "src/lib/crypto/dsa_common.cpp",
         "src/lib/crypto/dsa_ossl.cpp",
         "src/lib/crypto/ec_curves.cpp",
         "src/lib/crypto/ec_ossl.cpp",
         "src/lib/crypto/ecdh_ossl.cpp",
         "src/lib/crypto/ecdh_utils.cpp",
         "src/lib/crypto/ecdsa_ossl.cpp",
+        "src/lib/crypto/ed25519_ed448_ossl.cpp",
         "src/lib/crypto/eddsa_ossl.cpp",
         "src/lib/crypto/elgamal_ossl.cpp",
+        "src/lib/crypto/exdsa_ecdhkem_ossl.cpp",
         "src/lib/crypto/hash_common.cpp",
         "src/lib/crypto/hash_crc24.cpp",
         "src/lib/crypto/hash_ossl.cpp",
+        "src/lib/crypto/hkdf.cpp",
+        "src/lib/crypto/hkdf_ossl.cpp",
+        "src/lib/crypto/kem_combiner.cpp",
+        "src/lib/crypto/kyber_common.cpp",
+        "src/lib/crypto/kyber_ecdh_composite.cpp",
+        "src/lib/crypto/kyber_ossl.cpp",
         "src/lib/crypto/mem_ossl.cpp",
         "src/lib/crypto/mpi.cpp",
         "src/lib/crypto/rng_ossl.cpp",
         "src/lib/crypto/rsa_ossl.cpp",
         "src/lib/crypto/s2k.cpp",
         "src/lib/crypto/s2k_ossl.cpp",
+        "src/lib/crypto/secure_bytes.cpp",
         "src/lib/crypto/signatures.cpp",
+        "src/lib/crypto/sphincsplus_ossl.cpp",
         "src/lib/crypto/symmetric_common.cpp",
         "src/lib/crypto/symmetric_ossl.cpp",
-        # Same split as upstream CMakeLists.txt for ENABLE_PQC and
-        # ENABLE_CRYPTO_REFRESH. v2_seipd.cpp is listed with the shared sources.
-        "src/lib/crypto/secure_bytes.cpp",
-        "src/lib/crypto/hkdf.cpp",
-        "src/lib/crypto/hkdf_ossl.cpp",
-        "src/lib/crypto/ed25519_ed448_ossl.cpp",
         "src/lib/crypto/x25519_x448_ossl.cpp",
-        "src/lib/crypto/exdsa_ecdhkem_ossl.cpp",
-        "src/lib/crypto/kyber_common.cpp",
-        "src/lib/crypto/kyber_ossl.cpp",
-        "src/lib/crypto/kyber_ecdh_composite.cpp",
-        "src/lib/crypto/kem_combiner.cpp",
-        "src/lib/crypto/dilithium_common.cpp",
-        "src/lib/crypto/dilithium_ossl.cpp",
-        "src/lib/crypto/dilithium_exdsa_composite.cpp",
-        "src/lib/crypto/sphincsplus_ossl.cpp",
     ]
 
 if CONFIG["MOZ_STDCXX_COMPAT"] and (CONFIG["MOZ_ASAN"] or CONFIG["MOZ_TSAN"]):
