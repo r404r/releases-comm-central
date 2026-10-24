@@ -2115,10 +2115,12 @@ export var RNP = {
         false // callback return value if exception is thrown
       );
 
-      // If a message is encrypted to a hidden recipients, RNP will call
-      // the callback with each available secret key that has a matching
-      // type and might potentially work for decrypting. We collect the
-      // list of fingerprints, and must unlock all of them.
+      // Hidden recipients make RNP offer every loaded secret key of a
+      // matching algorithm. That includes RFC 4880 all-zero key ids and
+      // RFC 9580 anonymous PKESK v6 (zero-length key fingerprint). The
+      // experimental library maps that empty fingerprint onto an empty
+      // key id, and RNP_VERIFY_ALLOW_HIDDEN_RECIPIENT is what allows the
+      // search to proceed. Collect every fingerprint and unlock all of them.
       RNPLib.rnp_op_verify_set_flags(
         verify_op,
         RNPLib.RNP_VERIFY_ALLOW_HIDDEN_RECIPIENT

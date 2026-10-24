@@ -1,0 +1,6 @@
+Patches applied to the experimental RNP snapshot by this fork live here.
+They are already applied to the in-tree sources under third_party/rnp_experimental.
+mach vendor replays the list in third_party/rnp_experimental/moz.yaml.
+
+These patches are not applied to third_party/rnp (the stable 0.18.1 copy).
+Drop a patch when a newer snapshot already contains the fix.

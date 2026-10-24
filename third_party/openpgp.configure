@@ -316,10 +316,12 @@ with only_when(in_tree_librnp):
                     "x25519",
                 )
             )
-            # PQC modules, needed by rnp_experimental only. Must stay in sync with
-            # the conditional source list in third_party/botan/botan.mozbuild.
-            if milestone.is_nightly:
-                botan_modules += ",ed448,legacy_ec_point,ml_kem,x448"
+            # Modules for rnp_experimental (PQC and RFC 9580). This fork builds
+            # that library on every channel, so they are not limited to nightly.
+            # ml_dsa and slh_dsa_shake are required once ENABLE_CRYPTO_REFRESH is
+            # set together with ENABLE_PQC. Must stay in sync with the extra
+            # source list in third_party/botan/botan.mozbuild.
+            botan_modules += ",ed448,legacy_ec_point,ml_dsa,ml_kem,slh_dsa_shake,x448"
 
             # Initialize abi_flags with existing compiler flags to preserve target/sysroot settings.
             abi_flags = list(getattr(cxx_compiler, "flags", []))

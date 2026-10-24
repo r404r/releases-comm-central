@@ -8,3 +8,4 @@
 # They must agree with the matching ENABLE_* macros in config.h, which rnp.cpp
 # verifies, and with the -D list passed to rnp_symbols.py in moz.yaml.
 DEFINES["RNP_EXPERIMENTAL_PQC"] = True
+DEFINES["RNP_EXPERIMENTAL_CRYPTO_REFRESH"] = True

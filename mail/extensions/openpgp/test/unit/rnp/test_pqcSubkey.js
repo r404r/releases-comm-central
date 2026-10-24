@@ -5,6 +5,10 @@
 /**
  * Tests adding a v4 post-quantum (ML-KEM-768+X25519) encryption subkey
  * to an existing key, and the preconditions that must be met.
+ *
+ * The experimental RNP library is built on every channel in this fork.
+ * The pref is still set explicitly because RNPLib chooses the library
+ * once, the first time it is loaded.
  */
 
 "use strict";
