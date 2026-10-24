@@ -3389,8 +3389,8 @@ ffi_decrypt_key_provider(const pgp_key_request_ctx_t *ctx, void *userdata)
     if (!hidden) {
         return ffi->key_provider.callback(ctx, ffi->key_provider.userdata);
     }
-    /* if we had hidden request and last key is NULL then key search was exhausted */
-    if (!kparam->op->allow_hidden || (kparam->has_hidden && !kparam->last)) {
+    /* Hidden recipients are only tried when the caller opted in. */
+    if (!kparam->op->allow_hidden) {
         return NULL;
     }
     /* inform user about the hidden recipient before searching through the loaded keys */
@@ -3399,6 +3399,16 @@ ffi_decrypt_key_provider(const pgp_key_request_ctx_t *ctx, void *userdata)
     }
     kparam->has_hidden = true;
     kparam->last = find_key(ffi, ctx->search, true, true, kparam->last);
+    if (!kparam->last) {
+        /* This PKESK has no further secret keys. Returning NULL makes the
+         * parser advance to the next packet, so the same packet is not tried
+         * again. Leave the cursor at the start of the keyring: the next
+         * anonymous PKESK must walk from the first key instead of staying
+         * exhausted. has_hidden stays set so used-recipient recording still
+         * runs, and a later success leaves last on that key because parsing
+         * stops there. */
+        kparam->last = NULL;
+    }
     return kparam->last;
 }
 

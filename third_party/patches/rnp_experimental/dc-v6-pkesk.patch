@@ -1,6 +1,6 @@
 From: Thunderbird fork <thunderbird-fork@local>
-Date: Fri, 23 Oct 2026 00:00:00 +0000
-Subject: [PATCH] Accept anonymous v6 PKESK packets encrypted to v4 keys
+Date: Sat, 24 Oct 2026 00:00:00 +0000
+Subject: [PATCH] Accept anonymous v6 PKESK packets, including a later recipient
 
 RFC 9580 PKESK v6 uses a one-octet count in front of the key version and
 fingerprint. A zero count means an anonymous recipient: those two fields
@@ -15,12 +15,51 @@ An anonymous v6 PKESK has an empty fingerprint. Key lookup has to use an
 empty key id, which is the hidden-recipient search the FFI already
 understands.
 
+That search walked the secret keys once and then stayed exhausted. A
+second anonymous PKESK therefore never saw a key when ours was not first.
+Returning no key already advances the parser to the next packet, so the
+cursor restarts at the first secret key. The 64-try cap is per PKESK for
+the same reason. used-recipient recording is unchanged: has_hidden stays
+set, and a successful try leaves last on the key that worked.
+
 Local patch against the vendored snapshot. Upstream RNP is fixing the
 same bugs separately; delete this file once a fixed snapshot is vendored.
 
 ---
+diff --git a/src/lib/rnp.cpp b/src/lib/rnp.cpp
+index 0689eca..ed81926 100644
+--- a/src/lib/rnp.cpp
++++ b/src/lib/rnp.cpp
+@@ -3389,8 +3389,8 @@ ffi_decrypt_key_provider(const pgp_key_request_ctx_t *ctx, void *userdata)
+     if (!hidden) {
+         return ffi->key_provider.callback(ctx, ffi->key_provider.userdata);
+     }
+-    /* if we had hidden request and last key is NULL then key search was exhausted */
+-    if (!kparam->op->allow_hidden || (kparam->has_hidden && !kparam->last)) {
++    /* Hidden recipients are only tried when the caller opted in. */
++    if (!kparam->op->allow_hidden) {
+         return NULL;
+     }
+     /* inform user about the hidden recipient before searching through the loaded keys */
+@@ -3399,6 +3399,16 @@ ffi_decrypt_key_provider(const pgp_key_request_ctx_t *ctx, void *userdata)
+     }
+     kparam->has_hidden = true;
+     kparam->last = find_key(ffi, ctx->search, true, true, kparam->last);
++    if (!kparam->last) {
++        /* This PKESK has no further secret keys. Returning NULL makes the
++         * parser advance to the next packet, so the same packet is not tried
++         * again. Leave the cursor at the start of the keyring: the next
++         * anonymous PKESK must walk from the first key instead of staying
++         * exhausted. has_hidden stays set so used-recipient recording still
++         * runs, and a later success leaves last on that key because parsing
++         * stops there. */
++        kparam->last = NULL;
++    }
+     return kparam->last;
+ }
+ 
 diff --git a/src/librepgp/stream-packet.cpp b/src/librepgp/stream-packet.cpp
-index 3da337dd28..d7cfc9d82b 100644
+index 3da337d..d7cfc9d 100644
 --- a/src/librepgp/stream-packet.cpp
 +++ b/src/librepgp/stream-packet.cpp
 @@ -1283,15 +1283,15 @@ pgp_pk_sesskey_t::parse(pgp_source_t &src)
@@ -43,7 +82,7 @@ index 3da337dd28..d7cfc9d82b 100644
              return RNP_ERROR_BAD_FORMAT;
          }
 diff --git a/src/librepgp/stream-parse.cpp b/src/librepgp/stream-parse.cpp
-index b7c82a79ad..b4293d5a26 100644
+index b7c82a7..c7acb69 100644
 --- a/src/librepgp/stream-parse.cpp
 +++ b/src/librepgp/stream-parse.cpp
 @@ -1737,7 +1737,7 @@ encrypted_try_key(pgp_source_encrypted_param_t *param,
@@ -55,7 +94,16 @@ index b7c82a79ad..b4293d5a26 100644
          sesskey.salg = static_cast<pgp_symm_alg_t>(decbuf[0]);
          decbuf.erase(decbuf.begin());
      }
-@@ -2439,6 +2439,8 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
+@@ -2429,6 +2429,8 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
+         }
+ 
+         size_t pubidx = 0;
++        /* Each hidden PKESK gets its own budget. Sharing this counter lets the
++         * first anonymous recipient consume all MAX_HIDDEN_TRIES attempts. */
+         size_t hidden_tries = 0;
+         errcode = RNP_ERROR_NO_SUITABLE_KEY;
+         while (pubidx < param->pubencs.size()) {
+@@ -2439,6 +2441,8 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
  #endif
                  search = rnp::KeySearch::create(pubenc.key_id);
  #if defined(ENABLE_CRYPTO_REFRESH)
@@ -64,3 +112,19 @@ index b7c82a79ad..b4293d5a26 100644
              } else { // PGP_PKSK_V6
                  search = rnp::KeySearch::create(pubenc.fp);
              }
+@@ -2448,6 +2452,7 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
+             auto seckey = handler->key_provider->request_key(*search, PGP_OP_DECRYPT, true);
+             if (!seckey) {
+                 pubidx++;
++                hidden_tries = 0;
+                 continue;
+             }
+             /* Check whether key fits our needs */
+@@ -2463,6 +2468,7 @@ init_encrypted_src(pgp_parse_handler_t *handler, pgp_source_t *src, pgp_source_t
+ #endif
+             if (!hidden || (++hidden_tries >= MAX_HIDDEN_TRIES)) {
+                 pubidx++;
++                hidden_tries = 0;
+             }
+             if (!seckey->has_secret() || !seckey->can_encrypt()) {
+                 continue;

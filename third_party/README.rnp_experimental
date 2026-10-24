@@ -10,7 +10,8 @@ RFC 9580 PKESK v6 and SEIPDv2 messages.
 
 A local patch for anonymous v6 PKESK packets is recorded in
 ../patches/rnp_experimental/ and listed in moz.yaml. It is already
-applied to the sources in this directory.
+applied to the sources in this directory. Each anonymous PKESK restarts
+secret-key iteration, so a later recipient still decrypts.
 
 For licensing information, please refer to the included documentation.
 
